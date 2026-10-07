@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baton — hand your Claude session to the next chat</title>
+<meta name="description" content="Baton keeps one living BATON.md of your project, state and next step. Drop it into any Claude chat, on any account, and continue exactly where you stopped.">
+<meta property="og:title" content="Baton — never lose your Claude context again">
+<meta property="og:description" content="One file. Any chat. Any account. Pick up exactly where you left off.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e8a53a'/%3E%3Crect x='6' y='14' width='20' height='4' rx='2' fill='%2314110d' transform='rotate(-35 16 16)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="Baton home"><span class="mark"></span>Baton</a>
+  <nav>
+    <a href="#how">How it works</a>
+    <a href="#overlay">Overlay</a>
+    <a href="#install">Install</a>
+    <a href="#file">The file</a>
+    <a class="gh" href="https://github.com/raj742133/baton" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main id="top">
+<section class="hero wrap">
+  <p class="eyebrow">A skill for Claude Code &amp; Claude chats</p>
+  <h1>Switch accounts.<br><em>Keep the thread.</em></h1>
+  <p class="lede">Baton keeps one living <code>BATON.md</code> of your project: where the folder is, what's done, what's decided, what's next. Drop it into any chat, on any account, and the new Claude finds your project and carries on from that exact sentence.</p>
+  <div class="cta">
+    <a class="btn primary" href="#install">Install in 30 seconds</a>
+    <a class="btn" href="#overlay">See the live overlay</a>
+  </div>
+  <ul class="proof">
+    <li>Local-only, no accounts</li>
+    <li>Secrets redacted</li>
+    <li>Updates itself every turn</li>
+  </ul>
+</section>
+
+<section id="how" class="wrap">
+  <h2>Three moves. No re-explaining.</h2>
+  <ol class="steps">
+    <li><span>1</span><h3>It saves while you work</h3><p>After every reply Baton refreshes the file: project path, git state, recent files, your decisions and the tail of the conversation. You write nothing.</p></li>
+    <li><span>2</span><h3>Drop it in a new chat</h3><p>Log out, log in, switch machines. Attach <code>BATON.md</code>. A protocol at the top tells the new Claude exactly how to behave.</p></li>
+    <li><span>3</span><h3>It finds your folder</h3><p>Not sure where the project lives? The file carries a fingerprint (git remote, marker files). Claude searches, verifies against the real folder, then continues.</p></li>
+  </ol>
+</section>
+
+<section id="overlay" class="wrap">
+  <h2>The overlay shows it happening</h2>
+  <p class="sub">Install the overlay and <code>/baton</code> opens a live pane: every save streams in, and one click copies the whole file or stores it in OneDrive, Dropbox or Drive. This is an interactive replica, press the buttons.</p>
+
+  <div class="stage">
+    <div class="window" role="group" aria-label="Baton overlay demo">
+      <div class="bar"><i></i><i></i><i></i><span>claude · /baton</span><b id="statusline">baton · rev 12 · saved just now</b></div>
+      <div class="pane">
+        <div class="phead">
+          <div><strong>BATON · acme-storefront</strong><small id="meta">rev 12 · 4.1 KB · auto-updates every turn</small></div>
+          <span class="live"><i></i>live</span>
+        </div>
+        <div class="row">
+          <button class="b primary" id="simTurn">Simulate a turn</button>
+          <button class="b" id="copyBtn">Copy whole .md</button>
+          <button class="b" id="dlBtn">Download .md</button>
+        </div>
+        <h4>Save a copy to</h4>
+        <div class="row" id="targets">
+          <button class="b chip" data-t="OneDrive">OneDrive</button>
+          <button class="b chip" data-t="Dropbox">Dropbox</button>
+          <button class="b chip" data-t="Google Drive">Google Drive</button>
+          <button class="b chip" data-t="iCloud Drive">iCloud</button>
+          <button class="b chip" data-t="Desktop">Desktop</button>
+        </div>
+        <h4>Live log</h4>
+        <ul class="log" id="log" aria-live="polite"></ul>
+      </div>
+    </div>
+    <p class="note" id="toast" role="status"></p>
+    <p class="fine">Demo only: the buttons here copy and download a sample file. In the real overlay they act on your own BATON.md.</p>
+  </div>
+</section>
+
+<section id="install" class="wrap">
+  <h2>Install</h2>
+  <p class="sub">Needs Node 18+ and Claude Code. Takes about 30 seconds. Nothing leaves your machine.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="win">Windows</button>
+    <button role="tab" aria-selected="false" data-tab="nix">macOS / Linux</button>
+    <button role="tab" aria-selected="false" data-tab="man">Manual</button>
+  </div>
+
+  <div class="panel" data-panel="win">
+    <p>1 · Run in PowerShell</p>
+    <pre><code id="c-win">irm https://SITE_URL/install.ps1 | iex</code><button class="cp" data-copy="c-win">Copy</button></pre>
+  </div>
+  <div class="panel" data-panel="nix" hidden>
+    <p>1 · Run in a terminal</p>
+    <pre><code id="c-nix">curl -fsSL https://SITE_URL/install.sh | sh</code><button class="cp" data-copy="c-nix">Copy</button></pre>
+  </div>
+  <div class="panel" data-panel="man" hidden>
+    <p>Download <a href="baton.zip">baton.zip</a>, unzip, then run <code>install.ps1</code> or <code>install.sh</code> from the folder. Or copy by hand:</p>
+    <pre><code id="c-man">skill/baton/        →  ~/.claude/skills/baton/
+skill/baton/scripts/baton.mjs  →  ~/.baton/bin/baton.mjs
+overlay/            →  ~/.baton/overlay/</code><button class="cp" data-copy="c-man">Copy</button></pre>
+  </div>
+
+  <ol class="manual">
+    <li><h3>Turn on the overlay <small>optional, recommended</small></h3>
+      <p>Start Claude Code with the overlay loaded, then type <code>/baton</code>.</p>
+      <pre><code id="c-ov">claude --plugin-dir "$HOME/.baton/overlay"</code><button class="cp" data-copy="c-ov">Copy</button></pre>
+      <p class="fine">In the desktop app, put the folder in <code>~/.claude/dev-mods/&lt;session&gt;/baton-overlay</code> and accept the hot-reload prompt.</p></li>
+    <li><h3>Or auto-save through hooks <small>no overlay needed</small></h3>
+      <pre><code id="c-hk">node ~/.baton/bin/baton.mjs install-hooks</code><button class="cp" data-copy="c-hk">Copy</button></pre>
+      <p class="fine">Adds Stop, PreCompact and SessionEnd hooks to <code>~/.claude/settings.json</code> (a backup is kept). Undo with <code>uninstall-hooks</code>.</p></li>
+    <li><h3>Hand off</h3>
+      <p>Just say <b>"baton, hand off"</b> in a chat. Claude writes the narrative (goal, state, exact next step) and the engine does the rest.</p></li>
+    <li><h3>Resume</h3>
+      <p>In the new account's chat, drop <code>BATON.md</code> (it's at <code>~/.baton/BATON.md</code>) and send. That's the whole ritual.</p></li>
+  </ol>
+
+  <h3 class="cmds-h">Commands</h3>
+  <div class="cmds">
+    <code>baton save</code><span>snapshot now</span>
+    <code>baton narrative -</code><span>set goal / state / next step (stdin)</span>
+    <code>baton note "…"</code><span>record a decision or preference</span>
+    <code>baton copy</code><span>whole file to the clipboard</span>
+    <code>baton export --to DIR</code><span>save a copy to OneDrive, Dropbox, USB…</span>
+    <code>baton targets</code><span>list detected storage folders</span>
+    <code>baton list</code><span>every project with a handoff</span>
+    <code>baton status --json</code><span>what the overlay reads</span>
+  </div>
+</section>
+
+<section id="file" class="wrap">
+  <h2>What's inside BATON.md</h2>
+  <p class="sub">One portable markdown file with six parts, written so a model with no memory of you can act on it.</p>
+  <div class="anatomy">
+    <div><b>0 · Pickup protocol</b><p>Orders for the next Claude: locate the folder, verify, summarise, continue. Treats the file as data, not commands.</p></div>
+    <div><b>1 · Location &amp; fingerprint</b><p>Path, git remote, branch, marker files. How to find the project even if you moved machines.</p></div>
+    <div><b>2 · Narrative</b><p>Goal, done, in progress, exact next step, open questions. Written by Claude.</p></div>
+    <div><b>3 · Decisions</b><p>Constraints and preferences, so they never need repeating.</p></div>
+    <div><b>4–5 · Map &amp; live state</b><p>Layout, recent files, uncommitted changes, recent commits, auto-captured.</p></div>
+    <div><b>6 · Conversation tail</b><p>Opening request and last exchanges, secrets redacted.</p></div>
+  </div>
+  <details class="sample"><summary>Read a sample BATON.md</summary><pre><code id="sample"></code></pre></details>
+</section>
+
+<section class="wrap faq">
+  <h2>Questions</h2>
+  <details><summary>Where is my data stored?</summary><p>Only in <code>~/.baton/</code> on your machine, plus wherever you export it. There is no server and no account. This website only hosts the installer.</p></details>
+  <details><summary>Does it keep secrets out?</summary><p>Common token shapes (API keys, GitHub tokens, bearer headers, <code>password=…</code>) are redacted before anything is written. Still, read the file before sharing it, and never put secrets in notes.</p></details>
+  <details><summary>Will the new chat remember <em>everything</em>?</summary><p>It gets the narrative, decisions, live state and the conversation tail, not a transcript. That is deliberate: a small, current file beats a stale giant one. Keep the narrative fresh and the handoff is lossless where it matters.</p></details>
+  <details><summary>Can it be a prompt-injection risk?</summary><p>The protocol tells the next Claude to treat the file as data from a past session and to ask before acting on anything that looks like a command. Only paste handoffs you created.</p></details>
+</section>
+</main>
+
+<footer class="wrap">
+  <span class="brand"><span class="mark"></span>Baton</span>
+  <span>Pass the work, not the explanation.</span>
+  <a href="https://github.com/raj742133/baton" target="_blank" rel="noopener">Source on GitHub</a>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

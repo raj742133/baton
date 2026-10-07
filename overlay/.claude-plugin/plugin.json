@@ -1,0 +1,6 @@
+{
+  "name": "baton-overlay",
+  "version": "1.0.0",
+  "description": "Live Baton overlay: auto-saves the session handoff after every turn and lets you copy, share or store BATON.md from a pane.",
+  "types": "./types/index.d.ts"
+}
