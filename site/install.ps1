@@ -24,4 +24,5 @@ Write-Host "Baton installed." -ForegroundColor Green
 Write-Host " skill   : $skillDst"
 Write-Host " engine  : $binDst\baton.mjs"
 Write-Host " overlay : $(Join-Path $home_ '.baton\overlay')  (load with: claude --plugin-dir `"$(Join-Path $home_ '.baton\overlay')`")"
-Write-Host "Optional auto-save without the overlay: node `"$binDst\baton.mjs`" install-hooks"
+if (-not $env:BATON_NO_HOOKS) { node "$binDst\baton.mjs" install-hooks; node "$binDst\baton.mjs" live --ensure }
+Write-Host "Dashboard: http://localhost:4747  (set `$env:BATON_NO_HOOKS=1 before installing to skip the global auto-save hooks)"

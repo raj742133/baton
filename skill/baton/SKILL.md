@@ -38,4 +38,4 @@ Never put secrets in narrative or notes; the engine redacts common token shapes,
 `show`, `path`, `copy`, `export --to DIR`, `targets` (detected cloud folders), `list` (all projects), `status --json`, `events`, `install-hooks` / `uninstall-hooks` (auto-save on every reply through Claude Code hooks).
 
 ## Auto-update
-Mechanical state refreshes by itself when either is active: the Baton overlay plugin (refreshes after every turn and shows it live in `/baton`) or `baton install-hooks`. The narrative only refreshes when you write it, so update it whenever the plan, the state or the next step changes materially.
+Mechanical state refreshes by itself in every project once `baton install-hooks` has run (the installer does it): on each prompt, reply, compaction and session end. Live view: http://localhost:4747 (`baton live`). The optional overlay plugin shows the same inside the app via `/baton`. The narrative only refreshes when you write it, so update it whenever the plan, the state or the next step changes materially.

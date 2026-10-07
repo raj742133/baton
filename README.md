@@ -9,7 +9,7 @@ Pass the work, not the explanation. Baton keeps one living `BATON.md` (project l
 
 ## Install
 Windows: `./install.ps1` · macOS/Linux: `sh install.sh`, then `claude --plugin-dir ~/.baton/overlay` and type `/baton`.
-Optional hooks-only auto-save: `node ~/.baton/bin/baton.mjs install-hooks`.
+The installer also runs `baton install-hooks`: user-level hooks (SessionStart, UserPromptSubmit, Stop, PreCompact, SessionEnd) save the handoff for every project automatically, and a local live dashboard runs at http://localhost:4747 (copy the whole file, save to OneDrive/Dropbox/Drive, live log). Opt out with `BATON_NO_HOOKS=1`.
 
 ## Use
 Say "baton, hand off". In the new chat, drop `~/.baton/BATON.md` and send.

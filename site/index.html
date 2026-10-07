@@ -38,7 +38,7 @@
   <ul class="proof">
     <li>Local-only, no accounts</li>
     <li>Secrets redacted</li>
-    <li>Updates itself every turn</li>
+    <li>Auto-saves in every project, forever</li>
   </ul>
 </section>
 
@@ -53,7 +53,7 @@
 
 <section id="overlay" class="wrap">
   <h2>The overlay shows it happening</h2>
-  <p class="sub">Install the overlay and <code>/baton</code> opens a live pane: every save streams in, and one click copies the whole file or stores it in OneDrive, Dropbox or Drive. This is an interactive replica, press the buttons.</p>
+  <p class="sub">Every install ships a live dashboard at <code>localhost:4747</code> that starts with each Claude session: every save streams in, and one click copies the whole file or stores it in OneDrive, Dropbox or Drive. Below is an interactive replica, press the buttons.</p>
 
   <div class="stage">
     <div class="window" role="group" aria-label="Baton overlay demo">
@@ -111,13 +111,17 @@ overlay/            →  ~/.baton/overlay/</code><button class="cp" data-copy="c
   </div>
 
   <ol class="manual">
-    <li><h3>Turn on the overlay <small>optional, recommended</small></h3>
-      <p>Start Claude Code with the overlay loaded, then type <code>/baton</code>.</p>
+    <li><h3>Set up once, works everywhere <small>done by the installer</small></h3>
+      <p>The installer adds user-level hooks, so Baton saves on every prompt, reply and compaction in <b>every project</b>, even after you close Claude and open a new folder. Open the live dashboard any time:</p>
+      <pre><code id="c-live">http://localhost:4747</code><button class="cp" data-copy="c-live">Copy</button></pre>
+      <p class="fine">Skip the hooks with <code>BATON_NO_HOOKS=1</code> before installing; remove them with <code>baton uninstall-hooks</code>.</p></li>
+    <li><h3>Optional: in-terminal overlay <small>Claude Code plugin</small></h3>
+      <p>Start Claude Code with the overlay loaded, then type <code>/baton</code> for the same view inside the app.</p>
       <pre><code id="c-ov">claude --plugin-dir "$HOME/.baton/overlay"</code><button class="cp" data-copy="c-ov">Copy</button></pre>
       <p class="fine">In the desktop app, put the folder in <code>~/.claude/dev-mods/&lt;session&gt;/baton-overlay</code> and accept the hot-reload prompt.</p></li>
-    <li><h3>Or auto-save through hooks <small>no overlay needed</small></h3>
+    <li><h3>Re-run or repair the hooks</h3>
       <pre><code id="c-hk">node ~/.baton/bin/baton.mjs install-hooks</code><button class="cp" data-copy="c-hk">Copy</button></pre>
-      <p class="fine">Adds Stop, PreCompact and SessionEnd hooks to <code>~/.claude/settings.json</code> (a backup is kept). Undo with <code>uninstall-hooks</code>.</p></li>
+      <p class="fine">Writes SessionStart, UserPromptSubmit, Stop, PreCompact and SessionEnd hooks to <code>~/.claude/settings.json</code> (a backup is kept, your other hooks are untouched).</p></li>
     <li><h3>Hand off</h3>
       <p>Just say <b>"baton, hand off"</b> in a chat. Claude writes the narrative (goal, state, exact next step) and the engine does the rest.</p></li>
     <li><h3>Resume</h3>
@@ -133,7 +137,8 @@ overlay/            →  ~/.baton/overlay/</code><button class="cp" data-copy="c
     <code>baton export --to DIR</code><span>save a copy to OneDrive, Dropbox, USB…</span>
     <code>baton targets</code><span>list detected storage folders</span>
     <code>baton list</code><span>every project with a handoff</span>
-    <code>baton status --json</code><span>what the overlay reads</span>
+    <code>baton live</code><span>start the dashboard (localhost:4747)</span>
+    <code>baton install-hooks</code><span>global auto-save for every project</span>
   </div>
 </section>
 

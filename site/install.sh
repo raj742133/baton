@@ -17,4 +17,5 @@ echo "Baton installed."
 echo " skill   : $HOME/.claude/skills/baton"
 echo " engine  : $HOME/.baton/bin/baton.mjs"
 echo " overlay : $HOME/.baton/overlay  (claude --plugin-dir \"$HOME/.baton/overlay\")"
-echo "Optional auto-save without the overlay: node \"$HOME/.baton/bin/baton.mjs\" install-hooks"
+[ -z "$BATON_NO_HOOKS" ] && node "$HOME/.baton/bin/baton.mjs" install-hooks && node "$HOME/.baton/bin/baton.mjs" live --ensure
+echo "Dashboard: http://localhost:4747  (set BATON_NO_HOOKS=1 before installing to skip the global auto-save hooks)"

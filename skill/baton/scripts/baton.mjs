@@ -6,6 +6,8 @@ import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { execFileSync, spawn } from 'node:child_process'
+import http from 'node:http'
+import net from 'node:net'
 
 const VERSION = '1.0.0'
 const HOME = process.env.BATON_HOME || path.join(os.homedir(), '.baton')
@@ -371,7 +373,8 @@ const HELP = `baton ${VERSION} — portable session handoff
   baton list                     all projects with a handoff
   baton status [--json]          state for the overlay
   baton events [--n 20]          the live save log
-  baton install-hooks            add Stop/PreCompact/SessionEnd auto-save hooks to ~/.claude/settings.json
+  baton live [--port N]          local dashboard (default http://localhost:4747): live log, copy, save-to
+  baton install-hooks            add prompt/Stop/PreCompact/SessionStart/SessionEnd/PreCompact/SessionEnd auto-save hooks to ~/.claude/settings.json
   baton uninstall-hooks
 `
 
@@ -380,6 +383,7 @@ async function main() {
   try {
     switch (cmd) {
       case 'save': case 'snapshot': {
+        if (flags.detach) { await detach(['save', '--quiet', '--trigger', String(flags.trigger || 'hook')]); break }
         const r = await snapshot(flags)
         if (!flags.quiet) console.log(r.changed ? `Saved BATON.md rev ${r.revision} (${r.bytes} bytes)\n${r.out}\nLatest copy: ${path.join(HOME, 'BATON.md')}` : `Up to date (rev ${r.revision}). ${r.out}`)
         break
@@ -416,6 +420,7 @@ async function main() {
       case 'list': { const idx = readJson(path.join(HOME, 'index.json'), {}); for (const [id, p] of Object.entries(idx)) console.log(`${p.name.padEnd(24)} rev ${String(p.revision).padEnd(4)} ${p.updated.slice(0, 16)}  ${p.root}  [${id}]`); break }
       case 'status': { const s = status(); console.log(flags.json ? JSON.stringify(s) : `Project: ${s.project.name}\nFile: ${s.file}\nSaved: ${s.saved ? `rev ${s.saved.revision} at ${s.saved.updated}` : 'not yet'}\nProjects tracked: ${s.projects}`); break }
       case 'events': { const n = Number(flags.n || 20); readText(EVENTS).split('\n').filter(Boolean).slice(-n).forEach(l => console.log(l)); break }
+      case 'live': await live(flags); break
       case 'install-hooks': case 'uninstall-hooks': installHooks(cmd === 'uninstall-hooks'); break
       default: console.log(HELP)
     }
@@ -425,23 +430,130 @@ async function main() {
   }
 }
 
+// Hooks must never slow a prompt down: read the payload, hand it to a detached copy of ourselves, return at once.
+async function detach(args) {
+  const payload = await stdinText(1500)
+  const child = spawn(process.execPath, [process.argv[1], ...args], { detached: true, stdio: ['pipe', 'ignore', 'ignore'], windowsHide: true })
+  child.on('error', () => {})
+  child.stdin.on('error', () => {})
+  child.stdin.end(payload)
+  child.unref()
+}
+
+const PORT_DEFAULT = 4747
+function portOpen(port) {
+  return new Promise(res => {
+    const s = net.connect({ port, host: '127.0.0.1' }, () => { s.destroy(); res(true) })
+    s.on('error', () => res(false))
+    s.setTimeout(500, () => { s.destroy(); res(false) })
+  })
+}
+
+// Local-only dashboard. Bound to 127.0.0.1, Host header checked, writes need a custom header and can only
+// target folders from targets(), so a web page you visit cannot make it write anywhere.
+async function live(flags) {
+  const port = Number(flags.port || PORT_DEFAULT)
+  if (flags.ensure) { // SessionStart hook: start the dashboard once, detached, then exit
+    if (!(await portOpen(port))) {
+      const c = spawn(process.execPath, [process.argv[1], 'live', '--port', String(port)], { detached: true, stdio: 'ignore', windowsHide: true })
+      c.on('error', () => {})
+      c.unref()
+    }
+    return
+  }
+  if (await portOpen(port)) { console.log(`Baton dashboard already running: http://localhost:${port}`); return }
+  const okHost = h => h === `localhost:${port}` || h === `127.0.0.1:${port}`
+  const send = (res, code, type, body) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body) }
+  const server = http.createServer((req, res) => {
+    if (!okHost(req.headers.host)) return send(res, 403, 'text/plain', 'forbidden')
+    const u = new URL(req.url, 'http://x')
+    const id = u.searchParams.get('id')
+    const idx = readJson(path.join(HOME, 'index.json'), {})
+    const file = id && idx[id] ? path.join(PROJECTS, id, 'BATON.md') : path.join(HOME, 'BATON.md')
+    if (u.pathname === '/') return send(res, 200, 'text/html; charset=utf-8', DASH)
+    if (u.pathname === '/api/status') {
+      let bytes = 0
+      try { bytes = fs.statSync(file).size } catch { /* none yet */ }
+      const events = readText(EVENTS).split('\n').filter(Boolean).slice(-60).map(l => { try { return JSON.parse(l) } catch { return null } }).filter(Boolean).reverse()
+      const projects = Object.entries(idx).map(([k, v]) => ({ id: k, ...v })).sort((a, b) => b.updated.localeCompare(a.updated))
+      return send(res, 200, 'application/json', JSON.stringify({ version: VERSION, projects, events, targets: targets(), bytes, now: now() }))
+    }
+    if (u.pathname === '/api/md') return send(res, 200, 'text/markdown; charset=utf-8', readText(file))
+    if (u.pathname === '/api/export' && req.method === 'POST') {
+      if (req.headers['x-baton'] !== '1') return send(res, 403, 'text/plain', 'forbidden')
+      const t = targets().find(x => x.path === u.searchParams.get('to'))
+      if (!t) return send(res, 400, 'text/plain', 'unknown target')
+      try {
+        const dest = path.join(t.path, 'BATON.md')
+        fs.copyFileSync(file, dest)
+        event('exported', { to: dest })
+        return send(res, 200, 'application/json', JSON.stringify({ dest }))
+      } catch (e) { return send(res, 500, 'text/plain', String(e.message)) }
+    }
+    send(res, 404, 'text/plain', 'not found')
+  })
+  server.on('error', e => { console.error('baton live: ' + e.message); process.exit(1) })
+  server.listen(port, '127.0.0.1', () => console.log(`Baton dashboard: http://localhost:${port}  (Ctrl+C to stop)`))
+}
+
+const DASH = String.raw`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Baton live</title>
+<style>
+:root{--bg:#12100c;--bg2:#1a1712;--ink:#f3ece0;--mute:#a39a8a;--line:#2d2820;--amber:#e8a53a;--green:#6fcf97}
+@media(prefers-color-scheme:light){:root{--bg:#faf6ee;--bg2:#f1ebdd;--ink:#231d12;--mute:#6e6554;--line:#ded5c0;--amber:#b9740a;--green:#1f8a52}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+.w{max-width:960px;margin:0 auto;padding:24px 16px 64px}h1{font:600 26px Georgia,serif;margin:0 0 4px}h1 i{color:var(--amber)}
+.mute{color:var(--mute)}.live{color:var(--green);font:12px ui-monospace,monospace}.live:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;animation:p 1.6s infinite}@keyframes p{50%{opacity:.25}}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+select,button{font:500 13px ui-monospace,monospace;background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--amber)}button.p{background:var(--amber);color:#1a1307;border-color:var(--amber)}button.ok{border-color:var(--green);color:var(--green)}
+h2{font:500 12px ui-monospace,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:26px 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px}ul{list-style:none;margin:0;padding:0}li{padding:6px 0;border-bottom:1px dashed var(--line);font:13px ui-monospace,monospace;color:var(--mute)}li b{color:var(--ink);font-weight:500}li.s b{color:var(--green)}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px;max-height:460px;overflow:auto;white-space:pre-wrap;font:12.5px/1.55 ui-monospace,monospace}
+#t{min-height:22px;color:var(--green);font:13px ui-monospace,monospace;margin-top:10px}
+</style></head><body><div class="w">
+<div class="top"><div><h1>Baton <i>live</i></h1><div class="mute" id="meta">loading…</div></div><div><span class="live">auto-saving</span> <select id="proj"></select></div></div>
+<div class="row"><button class="p" id="copy">Copy whole .md</button><button id="dl">Download .md</button><button id="pv">Preview</button></div>
+<h2>Save a copy to</h2><div class="row" id="tg"></div><div id="t" role="status"></div>
+<h2>Live log</h2><ul id="log"></ul>
+<pre id="md" hidden></pre></div>
+<script>
+const $=s=>document.querySelector(s);let cur='',data=null;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ago=i=>{const s=Math.max(0,(Date.now()-new Date(i))/1000);return s<10?'just now':s<90?Math.round(s)+'s ago':s<5400?Math.round(s/60)+'m ago':(s/3600).toFixed(1)+'h ago'};
+const toast=m=>{$('#t').textContent=m;setTimeout(()=>$('#t').textContent='',4500)};
+const q=()=>cur?'?id='+encodeURIComponent(cur):'';
+async function tick(){try{data=await (await fetch('/api/status'+q())).json()}catch{$('#meta').textContent='dashboard stopped';return}
+ const sel=$('#proj');if(sel.options.length!==data.projects.length){sel.innerHTML=data.projects.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join('');if(!cur&&data.projects[0])cur=data.projects[0].id}
+ sel.value=cur;const p=data.projects.find(x=>x.id===cur)||data.projects[0];
+ $('#meta').textContent=p?p.name+' · rev '+p.revision+' · '+(data.bytes/1024).toFixed(1)+' KB · saved '+ago(p.updated)+' · '+p.root:'No handoff yet. Send a prompt in any Claude project.';
+ $('#log').innerHTML=data.events.slice(0,25).map(e=>'<li class="'+(e.type==='saved'?'s':'')+'"><b>'+esc({saved:'● saved',unchanged:'· unchanged',exported:'↗ exported',copied:'⧉ copied'}[e.type]||'· '+e.type)+'</b> '+esc(e.project||'')+(e.revision?' rev '+e.revision:'')+(e.trigger?' ('+esc(e.trigger)+')':'')+(e.to?' → '+esc(e.to):'')+' · '+ago(e.at)+'</li>').join('');
+ if($('#tg').dataset.n!=String(data.targets.length)){$('#tg').dataset.n=data.targets.length;$('#tg').innerHTML=data.targets.map(t=>'<button data-p="'+esc(t.path)+'">'+esc(t.label)+'</button>').join('')||'<span class="mute">No cloud folders found.</span>'}
+ if(!$('#md').hidden)$('#md').textContent=await (await fetch('/api/md'+q())).text()}
+$('#proj').onchange=e=>{cur=e.target.value;tick()};
+$('#copy').onclick=async()=>{const t=await (await fetch('/api/md'+q())).text();try{await navigator.clipboard.writeText(t);toast('Copied '+(t.length/1024).toFixed(1)+' KB to the clipboard')}catch{toast('Clipboard blocked: use Download')}};
+$('#dl').onclick=async()=>{const t=await (await fetch('/api/md'+q())).text();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/markdown'}));a.download='BATON.md';a.click()};
+$('#pv').onclick=()=>{const m=$('#md');m.hidden=!m.hidden;tick()};
+$('#tg').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const r=await fetch('/api/export'+q()+(cur?'&':'?')+'to='+encodeURIComponent(b.dataset.p),{method:'POST',headers:{'X-Baton':'1'}});if(r.ok){const j=await r.json();b.classList.add('ok');toast('Saved to '+j.dest);setTimeout(()=>b.classList.remove('ok'),2500)}else toast('Could not save: '+await r.text());tick()};
+tick();setInterval(tick,2000);
+</script></body></html>`
+
 function installHooks(remove) {
   const sp = path.join(os.homedir(), '.claude', 'settings.json')
   const settings = readJson(sp, {})
   const self = fwd(path.resolve(process.argv[1]))
-  const command = `node "${self}" save --quiet --trigger hook`
+  const mk = ev => ev === 'SessionStart' ? `node "${self}" live --ensure` : `node "${self}" save --detach --trigger ${ev}`
   const MARK = 'baton'
   settings.hooks = settings.hooks || {}
-  for (const ev of ['Stop', 'PreCompact', 'SessionEnd']) {
+  for (const ev of ['SessionStart', 'UserPromptSubmit', 'Stop', 'PreCompact', 'SessionEnd']) {
     const arr = (settings.hooks[ev] || []).filter(g => !JSON.stringify(g).includes(`${MARK}.mjs`))
-    if (!remove) arr.push({ hooks: [{ type: 'command', command, timeout: 20 }] })
+    if (!remove) arr.push({ hooks: [{ type: 'command', command: mk(ev), timeout: 10 }] })
     if (arr.length) settings.hooks[ev] = arr; else delete settings.hooks[ev]
   }
   if (!Object.keys(settings.hooks).length) delete settings.hooks
   if (fs.existsSync(sp)) fs.copyFileSync(sp, sp + '.baton.bak')
   ensure(path.dirname(sp))
   fs.writeFileSync(sp, JSON.stringify(settings, null, 2))
-  console.log(remove ? 'Baton hooks removed.' : `Baton hooks installed in ${sp} (backup: settings.json.baton.bak).\nEvery reply, compaction and session end now refreshes BATON.md.`)
+  console.log(remove ? 'Baton hooks removed.' : `Baton hooks installed in ${sp} (backup: settings.json.baton.bak).\nEvery prompt, reply, compaction and session end now refreshes BATON.md for ANY project, and the dashboard starts with each session: http://localhost:4747`)
 }
 
 main()
