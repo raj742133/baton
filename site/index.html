@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Baton — hand your Claude session to the next chat</title>
 <meta name="description" content="Baton keeps one living BATON.md of your project, state and next step. Drop it into any Claude chat, on any account, and continue exactly where you stopped.">
 <meta property="og:title" content="Baton — never lose your Claude context again">
@@ -11,17 +11,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
 <header class="nav">
   <a class="brand" href="#top" aria-label="Baton home"><span class="mark"></span>Baton</a>
   <nav>
-    <a href="#how">How it works</a>
-    <a href="#overlay">Overlay</a>
+    <a class="hide-sm" href="#how">How it works</a>
+    <a class="hide-sm" href="#overlay">Live view</a>
     <a href="#install">Install</a>
-    <a href="#file">The file</a>
+    <a class="hide-sm" href="#file">The file</a>
     <a class="gh" href="https://github.com/raj742133/baton" target="_blank" rel="noopener">GitHub</a>
   </nav>
 </header>
@@ -87,7 +87,7 @@
 
 <section id="install" class="wrap">
   <h2>Install</h2>
-  <p class="sub">Needs Node 18+ and Claude Code. Takes about 30 seconds. Nothing leaves your machine.</p>
+  <p class="sub">Needs Node 18+ and Claude Code. Takes about 30 seconds. Nothing leaves your machine. Reading on a phone? Tap Copy and send the command to your computer, that is where Baton installs.</p>
 
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="win">Windows</button>
@@ -171,6 +171,6 @@ overlay/            →  ~/.baton/overlay/</code><button class="cp" data-copy="c
   <a href="https://github.com/raj742133/baton" target="_blank" rel="noopener">Source on GitHub</a>
 </footer>
 
-<script src="app.js"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>
