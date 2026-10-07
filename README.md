@@ -74,7 +74,11 @@ Open **http://localhost:4747**. It starts with every Claude session.
 
 It is bound to `127.0.0.1`, checks the `Host` header, and can only write to detected storage folders, so a web page you visit cannot make it save files.
 
-### Optional: in-app overlay
+### In the app: `/baton-live`
+
+Type **`/baton-live`** (or `/overlay`) in Claude Code. A skill makes sure the dashboard is running and opens it in the app's browser pane. It is installed with Baton.
+
+### Optional: overlay plugin
 
 `overlay/` is a Claude Code plugin that adds a `/baton-live` pane (live log, copy, save-to) inside the app. Load it with `claude plugin marketplace add raj742133/baton` then `claude plugin install baton-overlay@baton`, or for one session `claude --plugin-dir ~/.baton/overlay`. The dashboard above covers the same ground and works everywhere.
 

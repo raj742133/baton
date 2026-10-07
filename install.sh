@@ -10,7 +10,7 @@ if [ -z "$SRC" ]; then
   (cd "$TMP" && unzip -q baton.zip); SRC="$TMP"
 fi
 mkdir -p "$HOME/.claude/skills/baton" "$HOME/.baton/bin" "$HOME/.baton/overlay"
-cp -R "$SRC/skill/baton/." "$HOME/.claude/skills/baton/"
+for s in baton baton-live overlay; do mkdir -p "$HOME/.claude/skills/$s"; cp -R "$SRC/skill/$s/." "$HOME/.claude/skills/$s/"; done
 cp "$SRC/skill/baton/scripts/baton.mjs" "$HOME/.baton/bin/baton.mjs"
 [ -d "$SRC/overlay" ] && cp -R "$SRC/overlay/." "$HOME/.baton/overlay/"
 echo "Baton installed."

@@ -14,7 +14,7 @@ if (-not $src) {
   Expand-Archive $zip $tmp -Force; $src = $tmp
 }
 New-Item -ItemType Directory -Force $skillDst, $binDst | Out-Null
-Copy-Item "$src\skill\baton\*" $skillDst -Recurse -Force
+foreach ($s in 'baton','baton-live','overlay') { $d = Join-Path $home_ ".claude\skills\$s"; New-Item -ItemType Directory -Force $d | Out-Null; Copy-Item "$src\skill\$s\*" $d -Recurse -Force }
 Copy-Item "$src\skill\baton\scripts\baton.mjs" $binDst -Force
 if (Test-Path "$src\overlay") {
   $ov = Join-Path $home_ '.baton\overlay'; New-Item -ItemType Directory -Force $ov | Out-Null
