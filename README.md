@@ -76,7 +76,7 @@ It is bound to `127.0.0.1`, checks the `Host` header, and can only write to dete
 
 ### Optional: in-app overlay
 
-`overlay/` is a Claude Code plugin that adds a `/baton` pane (live log, copy, save-to) inside the app. Load it with `claude --plugin-dir ~/.baton/overlay`. The dashboard above covers the same ground and works everywhere.
+`overlay/` is a Claude Code plugin that adds a `/baton-live` pane (live log, copy, save-to) inside the app. Load it with `claude plugin marketplace add raj742133/baton` then `claude plugin install baton-overlay@baton`, or for one session `claude --plugin-dir ~/.baton/overlay`. The dashboard above covers the same ground and works everywhere.
 
 ![Overlay replica](docs/img/overlay-demo.png)
 

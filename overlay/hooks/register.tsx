@@ -43,7 +43,7 @@ async function load($: EngineInterface) {
     const s: BatonStatus = JSON.parse(await baton($, ['status', '--json'], ''))
     await update($, status, () => s)
     const rev = s.saved ? `rev ${s.saved.revision} · saved ${ago(s.saved.updated)}` : 'not saved yet'
-    $.ui.status(`baton · ${rev} · /baton`)
+    $.ui.status(`baton · ${rev} · /baton-live`)
   } catch (err) {
     $.ui.status(`baton · engine missing (${String(err).slice(0, 50)})`)
   }
@@ -76,7 +76,9 @@ async function loadPreview($: EngineInterface) {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'baton', description: 'Live session handoff: copy, share or store BATON.md' })
+    // Not 'baton': that name belongs to the Baton skill, so a plugin command with it is shadowed.
+    await $.command.register({ name: 'baton-live', description: 'Baton live view: auto-saves, copy BATON.md, save to OneDrive/Dropbox/Drive' })
+    await $.command.register({ name: 'overlay', description: 'Alias of /baton-live' })
     void load($)
     $.clock.every(30_000, () => void load($))
     return next(e)
@@ -88,12 +90,14 @@ export const register: Register = on => {
     return done
   })
 
-  on('command.run', { command: 'baton' }, async $ => {
+  const open = async ($: EngineInterface) => {
     await load($)
     await loadPreview($)
     await $.ui.open({ id: PANE, title: 'Baton' })
-    return { text: 'Baton overlay opened.' }
-  })
+    return { text: 'Baton live view opened (it refreshes after every turn).' }
+  }
+  on('command.run', { command: 'baton-live' }, $ => open($))
+  on('command.run', { command: 'overlay' }, $ => open($))
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Button, Markdown } = $.ui.resolve(e)

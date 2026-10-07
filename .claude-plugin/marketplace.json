@@ -1,0 +1,18 @@
+{
+  "name": "baton",
+  "owner": {
+    "name": "raj742133"
+  },
+  "plugins": [
+    {
+      "name": "baton-overlay",
+      "source": "./overlay",
+      "description": "Baton live view: auto-saves the session handoff every turn; /baton-live opens a pane to copy BATON.md or store it in OneDrive, Dropbox or Drive.",
+      "version": "1.0.0",
+      "author": {
+        "name": "raj742133"
+      }
+    }
+  ],
+  "description": "Baton: portable session handoff for Claude"
+}
