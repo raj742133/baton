@@ -10,7 +10,7 @@ if (-not $src) {
   $tmp = Join-Path $env:TEMP 'baton-dl'; Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
   New-Item -ItemType Directory $tmp | Out-Null
   $zip = Join-Path $tmp 'baton.zip'
-  Invoke-WebRequest 'https://BATON_SITE/baton.zip' -OutFile $zip
+  Invoke-WebRequest 'https://baton-handoff.vercel.app/baton.zip' -OutFile $zip
   Expand-Archive $zip $tmp -Force; $src = $tmp
 }
 New-Item -ItemType Directory -Force $skillDst, $binDst | Out-Null

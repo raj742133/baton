@@ -6,7 +6,7 @@ HERE="$(cd "$(dirname "$0")" 2>/dev/null && pwd || echo "")"
 SRC=""
 [ -n "$HERE" ] && [ -d "$HERE/skill/baton" ] && SRC="$HERE"
 if [ -z "$SRC" ]; then
-  TMP="$(mktemp -d)"; curl -fsSL "https://BATON_SITE/baton.zip" -o "$TMP/baton.zip"
+  TMP="$(mktemp -d)"; curl -fsSL "https://baton-handoff.vercel.app/baton.zip" -o "$TMP/baton.zip"
   (cd "$TMP" && unzip -q baton.zip); SRC="$TMP"
 fi
 mkdir -p "$HOME/.claude/skills/baton" "$HOME/.baton/bin" "$HOME/.baton/overlay"
